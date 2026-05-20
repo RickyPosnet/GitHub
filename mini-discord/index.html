@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MiniCord — Chat App</title>
+
+  <!-- Google Fonts: JetBrains Mono para código/UI, Syne para títulos -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+  <!-- Íconos de Lucide (librería ligera de SVG icons) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+
+  <!-- ============================================================
+       CONTENEDOR DE NOTIFICACIONES TOAST
+       Las notificaciones aparecen en la esquina superior derecha.
+       Se generan dinámicamente desde app.js
+  ============================================================ -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- ============================================================
+       ESTRUCTURA PRINCIPAL DE LA APP (3 columnas tipo Discord)
+       .app-layout divide la pantalla en:
+         1. sidebar-servers  → lista de servidores/canales (izquierda)
+         2. main-content     → área de mensajes (centro)
+         3. sidebar-users    → lista de usuarios (derecha)
+  ============================================================ -->
+  <div class="app-layout">
+
+    <!-- ── COLUMNA 1: SIDEBAR DE CANALES ── -->
+    <aside class="sidebar-channels" id="sidebar-channels">
+
+      <!-- Cabecera del servidor con nombre y botón de cierre para móvil -->
+      <div class="server-header">
+        <div class="server-title">
+          <div class="server-icon">M</div>
+          <span>MiniCord</span>
+        </div>
+        <!-- Botón para cerrar el sidebar en pantallas pequeñas -->
+        <button class="icon-btn sidebar-close-btn" id="sidebar-close-btn" title="Cerrar menú">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <!-- Buscador de mensajes global -->
+      <div class="search-box">
+        <i data-lucide="search"></i>
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Buscar mensajes..."
+          autocomplete="off"
+        />
+        <!-- Botón para limpiar la búsqueda -->
+        <button id="search-clear" class="icon-btn" style="display:none" title="Limpiar">
+          <i data-lucide="x-circle"></i>
+        </button>
+      </div>
+
+      <!-- Lista de canales de texto -->
+      <div class="channel-category">
+        <span class="category-label">
+          <i data-lucide="chevron-down"></i> CANALES DE TEXTO
+        </span>
+
+        <!-- Cada canal tiene data-channel para identificarlo en JS -->
+        <ul class="channel-list" id="channel-list">
+          <li class="channel-item active" data-channel="general">
+            <i data-lucide="hash"></i> general
+            <!-- Badge de mensajes no leídos (se muestra/oculta por JS) -->
+            <span class="unread-badge" id="badge-general" style="display:none">0</span>
+          </li>
+          <li class="channel-item" data-channel="gaming">
+            <i data-lucide="gamepad-2"></i> gaming
+            <span class="unread-badge" id="badge-gaming" style="display:none">0</span>
+          </li>
+          <li class="channel-item" data-channel="memes">
+            <i data-lucide="laugh"></i> memes
+            <span class="unread-badge" id="badge-memes" style="display:none">0</span>
+          </li>
+          <li class="channel-item" data-channel="musica">
+            <i data-lucide="music"></i> música
+            <span class="unread-badge" id="badge-musica" style="display:none">0</span>
+          </li>
+          <!-- Canal especial de mensajes privados (desafío extra) -->
+          <li class="channel-item private" data-channel="privado">
+            <i data-lucide="lock"></i> privado
+            <span class="unread-badge" id="badge-privado" style="display:none">0</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Sección de mensajes fijados (desafío extra: mensajes destacados) -->
+      <div class="channel-category pinned-section">
+        <span class="category-label">
+          <i data-lucide="pin"></i> MENSAJES FIJADOS
+        </span>
+        <!-- Se llena dinámicamente por JS cuando el usuario fija mensajes -->
+        <div id="pinned-list" class="pinned-list">
+          <p class="pinned-empty">Sin mensajes fijados</p>
+        </div>
+      </div>
+
+      <!-- Panel del usuario actual (parte inferior del sidebar) -->
+      <div class="user-panel">
+        <div class="user-avatar" id="current-user-avatar">Y</div>
+        <div class="user-info">
+          <span class="user-name" id="current-user-name">Yo</span>
+          <span class="user-status-text online">● En línea</span>
+        </div>
+        <!-- Botón de configuración -->
+        <button class="icon-btn" title="Configuración" id="settings-btn">
+          <i data-lucide="settings"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ── COLUMNA 2: ÁREA PRINCIPAL DE CHAT ── -->
+    <main class="main-content">
+
+      <!-- Barra superior con nombre del canal activo y estadísticas -->
+      <header class="chat-header">
+        <!-- Botón hamburguesa para abrir sidebar en móvil -->
+        <button class="icon-btn hamburger-btn" id="hamburger-btn" title="Menú">
+          <i data-lucide="menu"></i>
+        </button>
+
+        <div class="channel-info">
+          <i data-lucide="hash" id="channel-icon-header"></i>
+          <!-- Nombre del canal activo (se actualiza por JS) -->
+          <h2 id="active-channel-name">general</h2>
+        </div>
+
+        <div class="header-actions">
+          <!-- Contador total de mensajes del canal activo (desafío extra) -->
+          <span class="msg-count-badge" id="msg-count-badge" title="Total mensajes">
+            <i data-lucide="message-square"></i>
+            <span id="msg-count">0</span>
+          </span>
+          <!-- Botón para ver historial de actividad (desafío extra) -->
+          <button class="icon-btn" id="activity-btn" title="Historial de actividad">
+            <i data-lucide="activity"></i>
+          </button>
+          <!-- Botón para ver mensajes favoritos (desafío extra) -->
+          <button class="icon-btn" id="favorites-btn" title="Mensajes favoritos">
+            <i data-lucide="star"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Zona de mensajes principal — se llena dinámicamente por JS -->
+      <section class="messages-area" id="messages-area" aria-label="Mensajes">
+        <!-- Los mensajes se inyectan aquí con JavaScript -->
+      </section>
+
+      <!-- Indicador de "alguien está escribiendo..." -->
+      <div class="typing-indicator" id="typing-indicator" style="display:none">
+        <span class="typing-dots"><span></span><span></span><span></span></span>
+        <span id="typing-user-name">Alguien</span> está escribiendo...
+      </div>
+
+      <!-- ── CAJA DE ENTRADA DE MENSAJES ── -->
+      <div class="input-area">
+
+        <!-- Selector de emoji (botón que despliega el picker) -->
+        <button class="icon-btn emoji-btn" id="emoji-btn" title="Emojis">
+          <i data-lucide="smile"></i>
+        </button>
+
+        <!-- Panel de emojis (oculto por defecto) -->
+        <div class="emoji-picker" id="emoji-picker" style="display:none">
+          <!-- Cada emoji es un botón clickeable que inserta texto en el input -->
+          <button class="emoji-item" data-emoji="😀">😀</button>
+          <button class="emoji-item" data-emoji="😂">😂</button>
+          <button class="emoji-item" data-emoji="❤️">❤️</button>
+          <button class="emoji-item" data-emoji="🔥">🔥</button>
+          <button class="emoji-item" data-emoji="👍">👍</button>
+          <button class="emoji-item" data-emoji="🎮">🎮</button>
+          <button class="emoji-item" data-emoji="🎵">🎵</button>
+          <button class="emoji-item" data-emoji="😎">😎</button>
+          <button class="emoji-item" data-emoji="🤔">🤔</button>
+          <button class="emoji-item" data-emoji="🚀">🚀</button>
+          <button class="emoji-item" data-emoji="💯">💯</button>
+          <button class="emoji-item" data-emoji="✨">✨</button>
+        </div>
+
+        <!-- Textarea donde el usuario escribe su mensaje -->
+        <textarea
+          id="message-input"
+          placeholder="Escribe un mensaje en #general..."
+          rows="1"
+          maxlength="2000"
+          aria-label="Escribe un mensaje"
+        ></textarea>
+
+        <!-- Contador de caracteres del mensaje -->
+        <span class="char-counter" id="char-counter">0/2000</span>
+
+        <!-- Botón de enviar mensaje -->
+        <button class="send-btn" id="send-btn" title="Enviar (Enter)">
+          <i data-lucide="send"></i>
+        </button>
+      </div>
+    </main>
+
+    <!-- ── COLUMNA 3: SIDEBAR DE USUARIOS ── -->
+    <aside class="sidebar-users" id="sidebar-users">
+      <h3 class="users-title">Usuarios — <span id="online-count">0</span> en línea</h3>
+
+      <!-- Lista de usuarios en línea — generada por JS -->
+      <div class="users-section">
+        <p class="users-label">EN LÍNEA</p>
+        <ul class="users-list" id="online-users-list"></ul>
+      </div>
+
+      <!-- Lista de usuarios desconectados — generada por JS -->
+      <div class="users-section">
+        <p class="users-label">DESCONECTADOS</p>
+        <ul class="users-list" id="offline-users-list"></ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE CONFIGURACIÓN (nombre de usuario / avatar)
+       Se muestra al hacer clic en el engranaje del panel de usuario
+  ============================================================ -->
+  <div class="modal-overlay" id="settings-modal" style="display:none" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>⚙️ Configuración</h3>
+        <button class="icon-btn" id="close-settings-modal"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <label>Tu nombre de usuario</label>
+        <input type="text" id="settings-username" maxlength="20" placeholder="Nombre..."/>
+        <label>Color de avatar</label>
+        <!-- Paleta de colores para el avatar -->
+        <div class="color-picker" id="avatar-color-picker">
+          <button class="color-swatch active" data-color="#5865f2" style="background:#5865f2"></button>
+          <button class="color-swatch" data-color="#ed4245" style="background:#ed4245"></button>
+          <button class="color-swatch" data-color="#57f287" style="background:#57f287"></button>
+          <button class="color-swatch" data-color="#fee75c" style="background:#fee75c"></button>
+          <button class="color-swatch" data-color="#eb459e" style="background:#eb459e"></button>
+          <button class="color-swatch" data-color="#ff9500" style="background:#ff9500"></button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="save-settings-btn">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE HISTORIAL DE ACTIVIDAD (desafío extra)
+       Registra acciones: mensajes enviados, editados, eliminados, etc.
+  ============================================================ -->
+  <div class="modal-overlay" id="activity-modal" style="display:none" role="dialog" aria-modal="true">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h3><i data-lucide="activity"></i> Historial de actividad</h3>
+        <button class="icon-btn" id="close-activity-modal"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <!-- Cada acción se agrega aquí por JS -->
+        <ul id="activity-log" class="activity-log"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE MENSAJES FAVORITOS (desafío extra)
+       El usuario puede marcar mensajes con ⭐ y verlos aquí
+  ============================================================ -->
+  <div class="modal-overlay" id="favorites-modal" style="display:none" role="dialog" aria-modal="true">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h3><i data-lucide="star"></i> Mensajes favoritos</h3>
+        <button class="icon-btn" id="close-favorites-modal"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <!-- Los mensajes favoritos se renderizan aquí por JS -->
+        <div id="favorites-list" class="favorites-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SCRIPT PRINCIPAL DE LA APLICACIÓN
+       Cargado al final para que el DOM esté listo
+  ============================================================ -->
+  <script src="js/app.js"></script>
+</body>
+</html>
