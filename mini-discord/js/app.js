@@ -844,7 +844,7 @@ function applySearchFilter() {
  */
 function simulateResponse() {
   // Solo responder con cierta probabilidad (50%)
-  if (Math.random() < 0.5) return;
+  //if (Math.random() < 0.5) return;
 
   // Elegir un usuario online al azar (excluyendo el actual)
   const onlineUsers = SIMULATED_USERS.filter(u => u.status === 'online');
@@ -854,18 +854,18 @@ function simulateResponse() {
 
   // Respuestas predefinidas por canal
   const RESPONSES = {
-    general: ['¡Interesante! 👀', 'Totalmente de acuerdo 🙌', '¡Buena idea!', '¿En serio? Cuéntame más.', '¡Genial! 🔥'],
-    gaming:  ['¿Jugamos hoy? 🎮', '¡Ese juego es épico!', 'Pro gamer move 💪', 'gg ez 😂'],
-    memes:   ['😂😂😂', '💀💀💀', 'No puedo más de risa', 'Clásico.', 'Esto me representa.'],
-    musica:  ['🎵 Buenísimo', '¡Me encanta ese artista!', '¿Qué género es?', 'Top canción 🔥'],
-    privado: ['😏', 'Shh, es privado.', '🤫', 'Solo para nosotros.'],
+    general: ['¡Interesante! 👀', 'Totalmente de acuerdo 🙌', '¡Buena idea!', '¿En serio? Cuéntame más.', '¡Genial! 🔥', 'Sale Clash Royal', 'No entendí nada pero apoyo la moción 👍', 'Mi cerebro después de ver esto: 📉', 'Comprensible, tenga un buen día 🦖', '¿Esto viene en el examen? 😳', 'Es arte, pero abstracto.'],
+    gaming:  ['¿Jugamos hoy? 🎮', '¡Ese juego es épico!', 'Pro gamer move 💪', 'gg ez 😂', 'Juego nefasto', 'Sos nefasto jugando', 'F en el chat 🫡', 'Definición de carrear la partida.', 'Mucho texto, más gameplay 🕹️', 'Mi mamá: Ya apaga eso. Yo: No se puede pausar 😩', 'Reportado por hacks 😏'],
+    memes:   ['😂😂😂', '💀💀💀', 'No puedo más de risa', 'Clásico.', 'Esto me representa.', 'Malísimo', 'Y el chiste?', 'JAJAJA descrispado 💀', 'Mi último intento de cordura:', 'Procedo a: XD', 'Estaba triste hasta que vi esto.', 'Totalmente yo a las 3 AM 🤡', 'Pov: ves este post 👁️👄👁️'],
+    musica:  ['🎵 Buenísimo', '¡Me encanta ese artista!', '¿Qué género es?', 'Top canción 🔥', 'Es una basura esa música'],
+    privado: ['😏', 'Shh, es privado.', '🤫', 'Solo para nosotros.', 'No tengo pruebas pero tampoco dudas de que te gusto 😏', 'Si fueras un bug, no te corregiría nunca 😉', '¿Me vas a invitar a salir o tengo que programar un bot para que lo haga? 🤖', 'Pasame el IG de tu sonrisa 😳', 'Acá entre nos, la tensión se corta con un cable de red 🔌', 'Me tenés más enganchado que el café de la mañana ☕🔥'],
   };
 
   const channelResponses = RESPONSES[STATE.currentChannel] || RESPONSES.general;
   const responseText = channelResponses[Math.floor(Math.random() * channelResponses.length)];
 
   // Mostrar indicador de "está escribiendo..." después de 800ms
-  const delay = 800 + Math.random() * 1200; // Entre 0.8 y 2 segundos
+  const delay = 200 + Math.random() * 1000; // Entre 0.8 y 2 segundos
   setTimeout(() => {
     // Mostrar indicador de escritura
     const indicator = document.getElementById('typing-indicator');
